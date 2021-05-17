@@ -1,5 +1,7 @@
-import React, { Component, useEffect, useState } from "react";
-import { authService } from "../services";
+import React, { useEffect, useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { useAuth } from "../hooks/useAuth";
+import { useHistory } from "react-router-dom";
 
 import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
 import Webcam from "react-webcam";
@@ -60,173 +62,147 @@ function Copyright() {
   );
 }
 
-class FaceRecognition extends Component {
-  constructor(props) {
-    super(props);
-    this.webcam = React.createRef();
-    this.state = {
-      fullDesc: null,
-      descriptors: null,
-      faceMatcher: null,
-      match: null,
-      facingMode: null,
-      user: null,
-    };
-  }
+function FaceReco() {
+  const webcam = useRef();
+  const [faceMatcher, setFaceMatcher] = useState(null);
+  const [facingMode, setFacingMode] = useState(null);
+  let match;
+  let descriptors;
 
-  UNSAFE_componentWillMount = async () => {
+  const fetchData = async () => {
     await loadModels();
-    this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
-    this.setInputDevice();
+    setFaceMatcher(await createMatcher(JSON_PROFILE));
+    setInputDevice();
   };
 
-  setInputDevice = () => {
+  const setInputDevice = () => {
     navigator.mediaDevices.enumerateDevices().then(async (devices) => {
       let inputDevice = await devices.filter(
         (device) => device.kind === "videoinput"
       );
       if (inputDevice.length < 2) {
-        await this.setState({
-          facingMode: "user",
-        });
+        await setFacingMode("user");
       } else {
-        await this.setState({
-          facingMode: { exact: "environment" },
-        });
+        await setFacingMode({ exact: "environment" });
       }
-      this.startCapture();
     });
   };
 
-  startCapture = () => {
-    this.interval = setInterval(() => {
-      this.capture();
-    }, 1500);
-  };
-
-  componentWillUnmount() {
-    clearInterval(this.interval);
-  }
-
-  capture = async () => {
-    if (!!this.webcam.current) {
-      await getFullFaceDescription(
-        this.webcam.current.getScreenshot(),
-        inputSize
-      ).then((fullDesc) => {
-        if (!!fullDesc) {
-          this.setState({
-            descriptors: fullDesc.map((fd) => fd.descriptor),
-          });
-        }
-      });
-
-      if (!!this.state.descriptors && !!this.state.faceMatcher) {
-        let match = await this.state.descriptors.map((descriptor) =>
-          this.state.faceMatcher.findBestMatch(descriptor)
-        );
-        this.setState({ match });
-        if (match.length !== 0) {
-          this.state.user = Object.values(match[0])[0];
-        }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchData();
+      if (typeof webcam.current === "object") {
+        capture();
       }
-    }
-  };
+    }, 1500);
 
-  render() {
-    if (this.state.user === "Nicolas") {
-      authService.doSignInWithEmailAndPassword(
-        "nyco.demol@gmail.com",
-        "125478Nyco-"
+    return () => {
+      clearInterval(timer);
+    };
+  });
+
+  const capture = async () => {
+    let blob = webcam.current?.getScreenshot();
+    await getFullFaceDescription(blob, inputSize).then((fullDesc) => {
+      if (!!fullDesc) {
+        descriptors = fullDesc.map((fd) => fd.descriptor);
+      }
+    });
+
+    if (descriptors && faceMatcher) {
+      match = await descriptors.map((descriptor) =>
+        faceMatcher.findBestMatch(descriptor)
       );
     }
 
-    const { facingMode } = this.state;
-    let videoConstraints = null;
-    if (!!facingMode) {
-      videoConstraints = {
-        width: WIDTH,
-        height: HEIGHT,
-      };
+    if (typeof match !== "undefined") {
+      let user = Object.values(match[0])[0];
+      checkUser(user);
     }
+  };
 
-    return (
-      <Card>
-        <CardMedia>
+  const checkUser = (user) => {
+    if (user === "Nicolas") {
+      signin("nyco.demol@gmail.com", "125478Nyco-").then(() => {
+        history.push("/");
+      });
+      return true;
+    }
+  };
+
+  const history = useHistory();
+  const { signin } = useAuth();
+
+  let videoConstraints = null;
+  if (!!facingMode) {
+    videoConstraints = {
+      width: WIDTH,
+      height: HEIGHT,
+    };
+  }
+
+  return (
+    <Card>
+      <CardMedia>
+        <div
+          className="Camera"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
           <div
-            className="Camera"
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+              width: WIDTH,
+              height: HEIGHT,
             }}
           >
-            <div
-              style={{
-                width: WIDTH,
-                height: HEIGHT,
-              }}
-            >
-              <div style={{ position: "relative", width: WIDTH }}>
-                {!!videoConstraints ? (
-                  <div style={{ position: "absolute" }}>
-                    <Webcam
-                      audio={false}
-                      width={WIDTH}
-                      height={HEIGHT}
-                      mirrored
-                      ref={this.webcam}
-                      screenshotFormat="image/jpeg"
-                      videoConstraints={videoConstraints}
-                    />
-                  </div>
-                ) : null}
-              </div>
+            <div style={{ position: "relative", width: WIDTH }}>
+              {!!videoConstraints ? (
+                <div style={{ position: "absolute" }}>
+                  <Webcam
+                    audio={false}
+                    width={WIDTH}
+                    height={HEIGHT}
+                    mirrored
+                    ref={webcam}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={videoConstraints}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
-        </CardMedia>
-      </Card>
-    );
-  }
+        </div>
+      </CardMedia>
+    </Card>
+  );
 }
 
 function FormLogin() {
   const classes = useStyles();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const history = useHistory();
+  const { signin } = useAuth();
 
+  const { handleSubmit, register } = useForm();
 
-  const onSubmit = (event) => {
-    event.preventDefault();
-
-    authService
-      .doSignInWithEmailAndPassword(email, password)
-      .then(() => {
-        setEmail("");
-        setPassword("");
-        setError(null);
-      })
-      .catch((error) => {
-        setError(error);
-      });
-  };
-
-  const onChange = (handler, event) => {
-    handler(event.target.value);
+  const onSubmit = async (data) => {
+    await signin(data.email, data.password).then(() => {
+      history.push("/");
+    });
   };
 
   return (
-    <form className={classes.form} onSubmit={onSubmit}>
+    <form className={classes.form} onSubmit={handleSubmit(onSubmit)}>
       <TextField
         variant="outlined"
         margin="normal"
         required
         fullWidth
         id="email"
-        value={email}
-        onChange={(event) => onChange(setEmail, event)}
+        {...register("email")}
         label="Adresse email"
         name="email"
         autoComplete="email"
@@ -238,14 +214,12 @@ function FormLogin() {
         required
         fullWidth
         name="password"
+        {...register("password")}
         label="Mot de passe"
         type="password"
         id="password"
-        value={password}
-        onChange={(event) => onChange(setPassword, event)}
         autoComplete="current-password"
       />
-      {error && <p className="text-red-500 text-xs italic">{error.message}</p>}
 
       <FormControlLabel
         control={<Checkbox value="remember" color="primary" />}
@@ -267,7 +241,7 @@ function FormLogin() {
           </Link>
         </Grid>
         <Grid item>
-          <Link href="#" variant="body2">
+          <Link href="/signup" variant="body2">
             {"Pas encore de compte ?"}
           </Link>
         </Grid>
@@ -313,7 +287,7 @@ function SignIn() {
         <Typography component="h1" variant="h5">
           Se connecter
         </Typography>
-        {isCameraAvailable ? <FaceRecognition /> : <FormLogin />}
+        {isCameraAvailable ? <FaceReco /> : <FormLogin />}
       </div>
       <Box mt={8}>
         <Copyright />

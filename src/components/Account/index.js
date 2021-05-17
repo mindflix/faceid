@@ -22,7 +22,7 @@ import Chart from "./Chart";
 import Deposits from "./Deposits";
 import Orders from "./Orders";
 
-import { authService } from "../../services";
+import { useAuth } from "../../hooks/useAuth";
 
 function Copyright() {
   return (
@@ -119,6 +119,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Dashboard() {
+  const { signout } = useAuth();
+
   const classes = useStyles();
   const [open, setOpen] = React.useState(true);
   const handleDrawerOpen = () => {
@@ -158,7 +160,7 @@ export default function Dashboard() {
           >
             Dashboard
           </Typography>
-          <IconButton color="inherit" onClick={authService.doSignOut}>
+          <IconButton color="inherit" onClick={signout}>
             <ExitToAppIcon />
           </IconButton>
         </Toolbar>

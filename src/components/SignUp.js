@@ -18,7 +18,7 @@ function Copyright() {
     <Typography variant="body2" color="textSecondary" align="center">
       {"Copyright © "}
       <Link color="inherit" href="https://material-ui.com/">
-        Your Website
+        FaceID
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
@@ -57,7 +57,7 @@ function SignUp() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign up
+          S'inscrire
         </Typography>
         <form className={classes.form} noValidate>
           <Grid container spacing={2}>
@@ -69,7 +69,7 @@ function SignUp() {
                 required
                 fullWidth
                 id="firstName"
-                label="First Name"
+                label="Prénom"
                 autoFocus
               />
             </Grid>
@@ -79,7 +79,7 @@ function SignUp() {
                 required
                 fullWidth
                 id="lastName"
-                label="Last Name"
+                label="Nom"
                 name="lastName"
                 autoComplete="lname"
               />
@@ -90,7 +90,7 @@ function SignUp() {
                 required
                 fullWidth
                 id="email"
-                label="Email Address"
+                label="Adresse email"
                 name="email"
                 autoComplete="email"
               />
@@ -101,7 +101,7 @@ function SignUp() {
                 required
                 fullWidth
                 name="password"
-                label="Password"
+                label="Mot de passe"
                 type="password"
                 id="password"
                 autoComplete="current-password"
@@ -110,7 +110,7 @@ function SignUp() {
             <Grid item xs={12}>
               <FormControlLabel
                 control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label="I want to receive inspiration, marketing promotions and updates via email."
+                label="Je souhaite recevoir les nouveautés par email."
               />
             </Grid>
           </Grid>
@@ -121,12 +121,12 @@ function SignUp() {
             color="primary"
             className={classes.submit}
           >
-            Sign Up
+            S'inscrire
           </Button>
           <Grid container justify="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
-                Already have an account? Sign in
+              <Link href="/signin" variant="body2">
+                Déjà un compte ?
               </Link>
             </Grid>
           </Grid>
