@@ -1,14 +1,7 @@
 import React, { Component, useEffect, useState } from "react";
-
-import * as ROUTES from "../constants/routes";
 import { authService } from "../services";
 
-import {
-  loadModels,
-  getFullFaceDescription,
-  createMatcher,
-  createProfile,
-} from "../api/face";
+import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
 import Webcam from "react-webcam";
 
 import Avatar from "@material-ui/core/Avatar";
@@ -73,7 +66,6 @@ class FaceRecognition extends Component {
     this.webcam = React.createRef();
     this.state = {
       fullDesc: null,
-      detections: null,
       descriptors: null,
       faceMatcher: null,
       match: null,
@@ -82,7 +74,7 @@ class FaceRecognition extends Component {
     };
   }
 
-  componentWillMount = async () => {
+  UNSAFE_componentWillMount = async () => {
     await loadModels();
     this.setState({ faceMatcher: await createMatcher(JSON_PROFILE) });
     this.setInputDevice();
@@ -124,7 +116,6 @@ class FaceRecognition extends Component {
       ).then((fullDesc) => {
         if (!!fullDesc) {
           this.setState({
-            detections: fullDesc.map((fd) => fd.detection),
             descriptors: fullDesc.map((fd) => fd.descriptor),
           });
         }
@@ -150,7 +141,7 @@ class FaceRecognition extends Component {
       );
     }
 
-    const { detections, match, facingMode } = this.state;
+    const { facingMode } = this.state;
     let videoConstraints = null;
     if (!!facingMode) {
       videoConstraints = {
@@ -206,7 +197,6 @@ function FormLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  let isInvalid = password === "" || email === "";
 
   const onSubmit = (event) => {
     event.preventDefault();
@@ -288,12 +278,24 @@ function FormLogin() {
 
 function SignIn() {
   const classes = useStyles();
-  const [isCameraAvailable, setCameraAvailable] = useState(true);
+  const [isCameraAvailable, setCameraAvailable] = useState(false);
 
-  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-    console.log("enumerateDevices() not supported.");
-    setCameraAvailable(false);
-  }
+  const handleInputDevice = () => {
+    navigator.mediaDevices.enumerateDevices().then(async (devices) => {
+      let inputDevice = await devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+      if (inputDevice.length === 0) {
+        setCameraAvailable(false);
+      } else {
+        setCameraAvailable(true);
+      }
+    });
+    return isCameraAvailable;
+  };
+
+  handleInputDevice();
+
   useEffect(() => {
     const timer = setTimeout(function () {
       setCameraAvailable(false);

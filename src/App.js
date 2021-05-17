@@ -15,7 +15,6 @@ import Account from "./components/Account";
 import { authService } from "./services";
 
 function AuthenticatedRoute({ component: C, appProps, ...rest }) {
-  console.log(appProps.user.loggedIn);
   return (
     <Route
       {...rest}
@@ -45,29 +44,21 @@ function UnauthenticatedRoute({ component: C, appProps, ...rest }) {
   );
 }
 
-function onAuthStateChange(callback) {
-  return authService.auth.onAuthStateChanged((user) => {
-    if (user) {
-      callback({ loggedIn: true });
-      console.log("The user is logged in");
-    } else {
-      callback({ loggedIn: false });
-      console.log("The user is not logged in");
-    }
-  });
-}
-
 function App() {
   const [user, setUser] = useState({ loggedIn: true });
 
-  useEffect(async () => {
-    const unsubscribe = await onAuthStateChange(setUser);
+  useEffect(() => {
+    const unsubscribe = authService.auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUser({ loggedIn: true });
+      } else {
+        setUser({ loggedIn: false });
+      }
+    });
     return () => {
       unsubscribe();
     };
   }, []);
-
-  console.log(user.loggedIn);
 
   return (
     <Router>
