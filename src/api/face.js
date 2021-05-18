@@ -29,12 +29,6 @@ export async function getFullFaceDescription(blob, inputSize = 512) {
   return fullDesc;
 }
 
-export function createProfile(descriptors) {
-  let data = [];
-  descriptors[0].forEach((descriptor) => data.push(descriptor));
-  console.log(JSON.stringify(data));
-}
-
 const maxDescriptorDistance = 0.5;
 export async function createMatcher(faceProfile) {
   // Create labeled descriptors of member from profile

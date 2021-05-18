@@ -16,43 +16,43 @@ function createData(id, date, name, shipTo, paymentMethod, amount) {
 const rows = [
   createData(
     0,
-    "16 Mar, 2019",
-    "Elvis Presley",
-    "Tupelo, MS",
-    "VISA ⠀•••• 3719",
-    312.44
+    "18 Mai, 2021",
+    "Etienne Klein",
+    "Math Fonda",
+    1.5,
+    9.5
   ),
   createData(
     1,
-    "16 Mar, 2019",
-    "Paul McCartney",
-    "London, UK",
-    "VISA ⠀•••• 2574",
-    866.99
+    "18 Mai, 2021",
+    "Elon Musk",
+    "Cryptomonnaie",
+    4,
+    121.45
   ),
   createData(
     2,
-    "16 Mar, 2019",
-    "Tom Scholz",
-    "Boston, MA",
-    "MC ⠀•••• 1253",
-    100.81
+    "18 Mai, 2021",
+    "Bill Gates",
+    "Informatique",
+    2,
+    3.55
   ),
   createData(
     3,
-    "16 Mar, 2019",
-    "Michael Jackson",
-    "Gary, IN",
-    "AMEX ⠀•••• 2000",
-    654.39
+    "18 Mai, 2021",
+    "Linus Torvalds ",
+    "Electronique",
+    1.5,
+    15.25
   ),
   createData(
     4,
-    "15 Mar, 2019",
-    "Bruce Springsteen",
-    "Long Branch, NJ",
-    "VISA ⠀•••• 5919",
-    212.79
+    "17 Mai, 2021",
+    "Stephen Hawking",
+    "Physique",
+    1,
+    12.33
   ),
 ];
 
@@ -70,15 +70,15 @@ export default function Orders() {
   const classes = useStyles();
   return (
     <React.Fragment>
-      <Title>Recent Orders</Title>
+      <Title>Absents récents</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell>Date</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Ship To</TableCell>
-            <TableCell>Payment Method</TableCell>
-            <TableCell align="right">Sale Amount</TableCell>
+            <TableCell>Nom</TableCell>
+            <TableCell>Matière</TableCell>
+            <TableCell>Nombre d'heures</TableCell>
+            <TableCell align="right">Absences cumulées</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -95,7 +95,7 @@ export default function Orders() {
       </Table>
       <div className={classes.seeMore}>
         <Link color="primary" href="#" onClick={preventDefault}>
-          See more orders
+          Voir plus
         </Link>
       </div>
     </React.Fragment>

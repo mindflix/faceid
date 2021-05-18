@@ -62,7 +62,7 @@ function Copyright() {
   );
 }
 
-function FaceReco() {
+function FaceReco(props) {
   const webcam = useRef();
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [facingMode, setFacingMode] = useState(null);
@@ -94,7 +94,7 @@ function FaceReco() {
       if (!isEmpty(webcam.current)) {
         capture();
       }
-    }, 1500);
+    }, 1100);
 
     return () => {
       clearInterval(timer);
@@ -148,42 +148,60 @@ function FaceReco() {
     };
   }
 
+  const disableCamera = () => {
+    props.parentCallback(false);
+  };
+
   return (
-    <Card>
-      <CardMedia>
-        <div
-          className="Camera"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+    <div>
+      <Card>
+        <CardMedia>
           <div
+            className="Camera"
             style={{
-              width: WIDTH,
-              height: HEIGHT,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            <div style={{ position: "relative", width: WIDTH }}>
-              {!!videoConstraints ? (
-                <div style={{ position: "absolute" }}>
-                  <Webcam
-                    audio={false}
-                    width={WIDTH}
-                    height={HEIGHT}
-                    mirrored
-                    ref={webcam}
-                    screenshotFormat="image/jpeg"
-                    videoConstraints={videoConstraints}
-                  />
-                </div>
-              ) : null}
+            <div
+              style={{
+                width: WIDTH,
+                height: HEIGHT,
+              }}
+            >
+              <div style={{ position: "relative", width: WIDTH }}>
+                {!!videoConstraints ? (
+                  <div style={{ position: "absolute" }}>
+                    <Webcam
+                      audio={false}
+                      width={WIDTH}
+                      height={HEIGHT}
+                      mirrored
+                      ref={webcam}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={videoConstraints}
+                    />
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
-      </CardMedia>
-    </Card>
+        </CardMedia>
+      </Card>
+      <Grid container>
+        <Grid item xs>
+          <Link href="#" variant="body2" onClick={disableCamera}>
+            Se connecter via mot de passe?
+          </Link>
+        </Grid>
+        <Grid item>
+          <Link href="/signup" variant="body2">
+            {"Pas encore de compte ?"}
+          </Link>
+        </Grid>
+      </Grid>
+    </div>
   );
 }
 
@@ -262,27 +280,21 @@ function SignIn() {
   const [isCameraAvailable, setCameraAvailable] = useState(false);
 
   const handleInputDevice = () => {
-    navigator.mediaDevices.enumerateDevices().then(async (devices) => {
-      let inputDevice = await devices.filter(
-        (device) => device.kind === "videoinput"
-      );
-      if (inputDevice.length === 0) {
-        setCameraAvailable(false);
-      } else {
-        setCameraAvailable(true);
-      }
-    });
-    return isCameraAvailable;
+    if ("enumerateDevices" in navigator.mediaDevices) {
+      setCameraAvailable(true);
+    } else {
+      setCameraAvailable(false);
+    }
   };
 
-  handleInputDevice();
-
   useEffect(() => {
-    const timer = setTimeout(function () {
-      setCameraAvailable(false);
-    }, 20000);
-    return () => clearTimeout(timer);
-  });
+    handleInputDevice();
+  }, []);
+
+  const handleCallback = (data) => {
+    console.log(data);
+    setCameraAvailable(data);
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -294,8 +306,12 @@ function SignIn() {
         <Typography component="h1" variant="h5">
           Se connecter
         </Typography>
-        {isCameraAvailable ? <FaceReco /> : <FormLogin />}
       </div>
+      {isCameraAvailable ? (
+        <FaceReco parentCallback={handleCallback} />
+      ) : (
+        <FormLogin />
+      )}
       <Box mt={8}>
         <Copyright />
       </Box>

@@ -18,16 +18,16 @@ export default function Deposits() {
   const classes = useStyles();
   return (
     <React.Fragment>
-      <Title>Recent Deposits</Title>
+      <Title>Taux d'absentéisme</Title>
       <Typography component="p" variant="h4">
-        $3,024.00
+        12,4%
       </Typography>
       <Typography color="textSecondary" className={classes.depositContext}>
-        on 15 March, 2019
+        le 18 Mai, 2021
       </Typography>
       <div>
         <Link color="primary" href="#" onClick={preventDefault}>
-          View balance
+          Voir Rapports
         </Link>
       </div>
     </React.Fragment>

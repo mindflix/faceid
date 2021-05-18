@@ -22,6 +22,8 @@ import Chart from "./Chart";
 import Deposits from "./Deposits";
 import Orders from "./Orders";
 
+import esme from "../../images/esme_logo.png";
+
 import { useAuth } from "../../hooks/useAuth";
 
 function Copyright() {
@@ -29,7 +31,7 @@ function Copyright() {
     <Typography variant="body2" color="textSecondary" align="center">
       {"Copyright © "}
       <Link color="inherit" href="https://material-ui.com/">
-        Your Website
+        FaceID
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
@@ -54,6 +56,7 @@ const useStyles = makeStyles((theme) => ({
     ...theme.mixins.toolbar,
   },
   appBar: {
+    background: "#020992",
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
@@ -94,7 +97,7 @@ const useStyles = makeStyles((theme) => ({
     }),
     width: theme.spacing(7),
     [theme.breakpoints.up("sm")]: {
-      width: theme.spacing(9),
+      width: theme.spacing(8),
     },
   },
   appBarSpacer: theme.mixins.toolbar,
@@ -119,10 +122,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Dashboard() {
-  const { signout } = useAuth();
+  const { user, signout } = useAuth();
 
   const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -158,8 +161,11 @@ export default function Dashboard() {
             noWrap
             className={classes.title}
           >
-            Dashboard
+            {user.email}
           </Typography>
+          <IconButton color="inherit">
+            <img src={esme} alt="logo" width="76px" />
+          </IconButton>
           <IconButton color="inherit" onClick={signout}>
             <ExitToAppIcon />
           </IconButton>
