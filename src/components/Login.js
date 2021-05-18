@@ -66,8 +66,8 @@ function FaceReco() {
   const webcam = useRef();
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [facingMode, setFacingMode] = useState(null);
-  let match;
-  let descriptors;
+  let match = null;
+  let descriptors = null;
 
   const fetchData = async () => {
     await loadModels();
@@ -91,7 +91,7 @@ function FaceReco() {
   useEffect(() => {
     const timer = setInterval(() => {
       fetchData();
-      if (typeof webcam.current === "object") {
+      if (!isEmpty(webcam.current)) {
         capture();
       }
     }, 1500);
@@ -100,6 +100,13 @@ function FaceReco() {
       clearInterval(timer);
     };
   });
+
+  function isEmpty(obj) {
+    for (var key in obj) {
+      if (obj.hasOwnProperty(key)) return false;
+    }
+    return true;
+  }
 
   const capture = async () => {
     let blob = webcam.current?.getScreenshot();
@@ -115,7 +122,7 @@ function FaceReco() {
       );
     }
 
-    if (typeof match !== "undefined") {
+    if (!isEmpty(match)) {
       let user = Object.values(match[0])[0];
       checkUser(user);
     }
