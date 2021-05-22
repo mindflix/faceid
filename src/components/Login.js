@@ -130,7 +130,7 @@ function FaceReco(props) {
 
   const checkUser = (user) => {
     if (user === "Nicolas") {
-      signin("nyco.demol@gmail.com", "125478Nyco-").then(() => {
+      signin(REACT_APP_EMAIL_TEST, REACT_APP_PASSWORD_TEST).then(() => {
         history.push("/");
       });
       return true;
