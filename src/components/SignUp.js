@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
-import { loadModels, getFullFaceDescription } from "../api/face";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
@@ -16,31 +15,8 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
-import Card from "@material-ui/core/Card";
-import CardMedia from "@material-ui/core/CardMedia";
 
-import Webcam from "react-webcam";
-
-// Import face profile
-const fs = require("browserify-fs");
-const JSON_PROFILE = require("../descriptors/bnk48.json");
-
-const WIDTH = 420;
-const HEIGHT = 420;
-const inputSize = 160;
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link color="inherit" href="https://material-ui.com/">
-        FaceID
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+import Copyright from "./Copyright";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -145,7 +121,7 @@ function FormSignUp(props) {
       </Button>
       <Grid container justify="flex-end">
         <Grid item>
-          <Link href="/signin" variant="body2">
+          <Link href="/login" variant="body2">
             Déjà un compte ?
           </Link>
         </Grid>
@@ -154,139 +130,8 @@ function FormSignUp(props) {
   );
 }
 
-function InitFaceReco() {
-  const webcam = useRef();
-  const [facingMode, setFacingMode] = useState(null);
-  let descriptors = null;
-  let bundle = [];
-
-  const fetchData = async () => {
-    await loadModels();
-    setInputDevice();
-  };
-
-  useEffect(() => {
-    fetchData();
-    const timer = setInterval(() => {
-      capture();
-      saveDescriptors();
-    }, 3000);
-    return () => {
-      clearInterval(timer);
-    };
-  });
-
-  function isEmpty(obj) {
-    for (var key in obj) {
-      if (obj.hasOwnProperty(key)) return false;
-    }
-    return true;
-  }
-
-  const saveDescriptors = () => {
-    if (!isEmpty(descriptors)) {
-      let map = Object.values(descriptors[0]);
-      bundle.push(map);
-    }
-    if (bundle.length > 1) {
-      addToJSON(bundle);
-    }
-  };
-
-  const addToJSON = (bundle) => {
-    let name = "Christophe";
-    let json = {};
-    json[name] = { name: name, descriptors: bundle };
-
-    let pack = [];
-    pack.push(JSON_PROFILE);
-    pack.push(json);
-
-    fs.writeFile("../descriptors/bnk48.json", JSON.stringify(pack));
-
-    console.log();
-  };
-
-  const setInputDevice = () => {
-    navigator.mediaDevices.enumerateDevices().then(async (devices) => {
-      let inputDevice = await devices.filter(
-        (device) => device.kind === "videoinput"
-      );
-      if (inputDevice.length < 2) {
-        await setFacingMode("user");
-      } else {
-        await setFacingMode({ exact: "environment" });
-      }
-    });
-  };
-
-  const capture = async () => {
-    let blob = webcam.current?.getScreenshot();
-    await getFullFaceDescription(blob, inputSize).then((fullDesc) => {
-      if (!!fullDesc) {
-        descriptors = fullDesc.map((fd) => fd.descriptor);
-      }
-    });
-  };
-
-  let videoConstraints = null;
-  if (!!facingMode) {
-    videoConstraints = {
-      width: WIDTH,
-      height: HEIGHT,
-    };
-  }
-
-  return (
-    <div>
-      <Card>
-        <CardMedia>
-          <div
-            className="Camera"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: WIDTH,
-                height: HEIGHT,
-              }}
-            >
-              <div style={{ position: "relative", width: WIDTH }}>
-                {!!videoConstraints ? (
-                  <div style={{ position: "absolute" }}>
-                    <Webcam
-                      audio={false}
-                      width={WIDTH}
-                      height={HEIGHT}
-                      mirrored
-                      ref={webcam}
-                      screenshotFormat="image/jpeg"
-                      videoConstraints={videoConstraints}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </CardMedia>
-      </Card>
-    </div>
-  );
-}
-
 function SignUp() {
   const classes = useStyles();
-
-  const [isContinue, setContinue] = useState(false);
-
-  const handleData = (data) => {
-    setContinue(true);
-    console.log(data);
-  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -298,7 +143,7 @@ function SignUp() {
         <Typography component="h1" variant="h5">
           S'inscrire
         </Typography>
-        {isContinue ? <InitFaceReco /> : <FormSignUp data={handleData} />}
+        <FormSignUp />
       </div>
       <Box mt={5}>
         <Copyright />

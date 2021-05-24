@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
 import { useHistory } from "react-router-dom";
-
 import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
+
+import Copyright from "./Copyright";
 import Webcam from "react-webcam";
 
 import Avatar from "@material-ui/core/Avatar";
@@ -49,114 +50,58 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link color="inherit" href="https://material-ui.com/">
-        FaceID
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
-
-function FaceReco(props) {
+function FaceReco() {
   const webcam = useRef();
   const [faceMatcher, setFaceMatcher] = useState(null);
-  const [facingMode, setFacingMode] = useState(null);
-  let match = null;
-  let descriptors = null;
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-  const fetchData = async () => {
-    await loadModels();
-    setFaceMatcher(await createMatcher(JSON_PROFILE));
-    setInputDevice();
+  let videoConstraints = {
+    width: WIDTH,
+    height: HEIGHT,
   };
 
-  const setInputDevice = () => {
-    navigator.mediaDevices.enumerateDevices().then(async (devices) => {
-      let inputDevice = await devices.filter(
-        (device) => device.kind === "videoinput"
-      );
-      if (inputDevice.length < 2) {
-        await setFacingMode("user");
-      } else {
-        await setFacingMode({ exact: "environment" });
-      }
-    });
+  const init = async () => {
+    await loadModels();
+    setFaceMatcher(await createMatcher(JSON_PROFILE));
+    setLoading(false);
+  };
+
+  const capture = async () => {
+    if (webcam.current.stream.active) {
+      await getFullFaceDescription(
+        webcam.current.getScreenshot(),
+        inputSize
+      ).then(async (fullDesc) => {
+        let descriptors = fullDesc.map((fd) => fd.descriptor);
+        if (descriptors.length !== 0 && !!faceMatcher) {
+          let match = await descriptors.map((descriptor) =>
+            faceMatcher.findBestMatch(descriptor)
+          );
+          if (match) {
+            let label = match.map((m) => m._label);
+            if (!label.includes("unknown")) {
+              setUser(label.pop());
+            }
+          }
+        }
+      });
+    }
   };
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      fetchData();
-      if (!isEmpty(webcam.current)) {
+    init();
+    if (loading === false) {
+      const interval = setInterval(() => {
         capture();
-      }
-    }, 1100);
-
-    return () => {
-      clearInterval(timer);
-    };
-  });
-
-  function isEmpty(obj) {
-    for (var key in obj) {
-      if (obj.hasOwnProperty(key)) return false;
+      }, 500);
+      return () => clearInterval(interval);
     }
-    return true;
-  }
-
-  const capture = async () => {
-    let blob = webcam.current?.getScreenshot();
-    await getFullFaceDescription(blob, inputSize).then((fullDesc) => {
-      if (!!fullDesc) {
-        descriptors = fullDesc.map((fd) => fd.descriptor);
-      }
-    });
-
-    if (descriptors && faceMatcher) {
-      match = await descriptors.map((descriptor) =>
-        faceMatcher.findBestMatch(descriptor)
-      );
-    }
-
-    if (!isEmpty(match)) {
-      let user = Object.values(match[0])[0];
-      checkUser(user);
-    }
-  };
-
-  const checkUser = (user) => {
-    if (user === "Nicolas") {
-      signin(
-        process.env.REACT_APP_EMAIL_TEST,
-        process.env.REACT_APP_PASSWORD_TEST
-      ).then(() => {
-        history.push("/");
-      });
-      return true;
-    }
-  };
-
-  const history = useHistory();
-  const { signin } = useAuth();
-
-  let videoConstraints = null;
-  if (!!facingMode) {
-    videoConstraints = {
-      width: WIDTH,
-      height: HEIGHT,
-    };
-  }
-
-  const disableCamera = () => {
-    props.parentCallback(false);
-  };
+  }, [loading]);
 
   return (
     <div>
+      {user}
       <Card>
         <CardMedia>
           <div
@@ -174,19 +119,17 @@ function FaceReco(props) {
               }}
             >
               <div style={{ position: "relative", width: WIDTH }}>
-                {!!videoConstraints ? (
-                  <div style={{ position: "absolute" }}>
-                    <Webcam
-                      audio={false}
-                      width={WIDTH}
-                      height={HEIGHT}
-                      mirrored
-                      ref={webcam}
-                      screenshotFormat="image/jpeg"
-                      videoConstraints={videoConstraints}
-                    />
-                  </div>
-                ) : null}
+                <div style={{ position: "absolute" }}>
+                  <Webcam
+                    audio={false}
+                    width={WIDTH}
+                    height={HEIGHT}
+                    mirrored
+                    ref={webcam}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={videoConstraints}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -194,11 +137,11 @@ function FaceReco(props) {
       </Card>
       <Grid container>
         <Grid item xs>
-          <Link href="#" variant="body2" onClick={disableCamera}>
+          <Link href="#" variant="body2">
             Se connecter via mot de passe?
           </Link>
         </Grid>
-        <Grid item>
+        <Grid item xs>
           <Link href="/signup" variant="body2">
             {"Pas encore de compte ?"}
           </Link>
@@ -282,22 +225,26 @@ function SignIn() {
   const classes = useStyles();
   const [isCameraAvailable, setCameraAvailable] = useState(false);
 
-  const handleInputDevice = () => {
+  const handleVideoDevice = () => {
     if ("enumerateDevices" in navigator.mediaDevices) {
-      setCameraAvailable(true);
+      navigator.mediaDevices.enumerateDevices().then(async (devices) => {
+        let inputDevice = await devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+        if (inputDevice.length !== 0) {
+          setCameraAvailable(true);
+        } else {
+          setCameraAvailable(false);
+        }
+      });
     } else {
       setCameraAvailable(false);
     }
   };
 
   useEffect(() => {
-    handleInputDevice();
+    handleVideoDevice();
   }, []);
-
-  const handleCallback = (data) => {
-    console.log(data);
-    setCameraAvailable(data);
-  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -310,11 +257,7 @@ function SignIn() {
           Se connecter
         </Typography>
       </div>
-      {isCameraAvailable ? (
-        <FaceReco parentCallback={handleCallback} />
-      ) : (
-        <FormLogin />
-      )}
+      {isCameraAvailable ? <FaceReco /> : <FormLogin />}
       <Box mt={8}>
         <Copyright />
       </Box>
