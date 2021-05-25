@@ -4,6 +4,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useHistory } from "react-router-dom";
 import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
 
+import useFace from "../hooks/useFace";
+
 import Copyright from "./Copyright";
 import Webcam from "react-webcam";
 
@@ -22,9 +24,6 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Card from "@material-ui/core/Card";
 import CardMedia from "@material-ui/core/CardMedia";
-
-// Import face profile
-const JSON_PROFILE = require("../descriptors/bnk48.json");
 
 const WIDTH = 420;
 const HEIGHT = 420;
@@ -54,6 +53,7 @@ function FaceReco() {
   const webcam = useRef();
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { users, getDescriptors } = useFace();
   const [user, setUser] = useState(null);
 
   let videoConstraints = {
@@ -63,12 +63,12 @@ function FaceReco() {
 
   const init = async () => {
     await loadModels();
-    setFaceMatcher(await createMatcher(JSON_PROFILE));
+    setFaceMatcher(await createMatcher(users));
     setLoading(false);
   };
 
   const capture = async () => {
-    if (webcam.current.stream.active) {
+    if (webcam.current.stream.active !== "undefined") {
       await getFullFaceDescription(
         webcam.current.getScreenshot(),
         inputSize
@@ -137,7 +137,7 @@ function FaceReco() {
       </Card>
       <Grid container>
         <Grid item xs>
-          <Link href="#" variant="body2">
+          <Link href="#" variant="body2" onClick={() => getDescriptors()}>
             Se connecter via mot de passe?
           </Link>
         </Grid>
