@@ -1,31 +1,52 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
+import * as faceapi from "face-api.js";
 import firebase from "firebase/app";
 import "firebase/firestore";
 
 const db = firebase.firestore();
 
-export default function useFace() {
-  const [users, setUsers] = useState(null);
+export function useFace() {
+  const [users, setUsers] = useState([]);
+  const maxDescriptorDistance = 0.5;
 
-  const getDescriptors = () => {
-    return db
-      .collection("users")
-      .get()
-      .then((response) => response.forEach((doc) => console.log(doc.data())))
-      .catch((error) => {
-        console.log("Error getting documents: ", error);
-      });
+  const getUsers = () => {
+    db.collection("users").onSnapshot((snapshot) => {
+      const res = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setUsers(res);
+    });
+  };
+
+  const createMatcher = async (faceProfiles) => {
+    let members = Object.keys(faceProfiles);
+    let labeledDescriptors = members.map(
+      (member) =>
+        new faceapi.LabeledFaceDescriptors(
+          faceProfiles[member].email,
+          faceProfiles[member].descriptors.map(
+            (descriptor) => new Float32Array(descriptor)
+          )
+        )
+    );
+
+    let faceMatcher = new faceapi.FaceMatcher(
+      labeledDescriptors,
+      maxDescriptorDistance
+    );
+    return faceMatcher;
   };
 
   useEffect(() => {
-    getDescriptors();
-    setUsers(users);
-  });
+    getUsers();
+  }, []);
 
-  const values = {
+  // Return face methods
+  return {
     users,
-    getDescriptors,
+    getUsers,
+    createMatcher,
   };
-
-  return values;
 }

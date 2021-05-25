@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
-import { useHistory } from "react-router-dom";
-import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
+import { useFace } from "../hooks/useFace";
 
-import useFace from "../hooks/useFace";
+import { loadModels, getFullFaceDescription } from "../api/face";
 
 import Copyright from "./Copyright";
 import Webcam from "react-webcam";
@@ -51,10 +51,11 @@ const useStyles = makeStyles((theme) => ({
 
 function FaceReco() {
   const webcam = useRef();
-  const [faceMatcher, setFaceMatcher] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const { users, getDescriptors } = useFace();
+
+  const [faceMatcher, setFaceMatcher] = useState([]);
   const [user, setUser] = useState(null);
+
+  const { users, createMatcher } = useFace();
 
   let videoConstraints = {
     width: WIDTH,
@@ -63,8 +64,8 @@ function FaceReco() {
 
   const init = async () => {
     await loadModels();
-    setFaceMatcher(await createMatcher(users));
-    setLoading(false);
+    const matcher = await createMatcher(users);
+    await setFaceMatcher(matcher);
   };
 
   const capture = async () => {
@@ -73,6 +74,7 @@ function FaceReco() {
         webcam.current.getScreenshot(),
         inputSize
       ).then(async (fullDesc) => {
+        console.log(faceMatcher);
         let descriptors = fullDesc.map((fd) => fd.descriptor);
         if (descriptors.length !== 0 && !!faceMatcher) {
           let match = await descriptors.map((descriptor) =>
@@ -91,13 +93,16 @@ function FaceReco() {
 
   useEffect(() => {
     init();
-    if (loading === false) {
+  }, []);
+
+  useEffect(() => {
+    if (users.length !== 0 && faceMatcher.length !== 0) {
       const interval = setInterval(() => {
         capture();
-      }, 500);
+      }, 1000);
       return () => clearInterval(interval);
     }
-  }, [loading]);
+  }, [faceMatcher]);
 
   return (
     <div>
@@ -137,7 +142,7 @@ function FaceReco() {
       </Card>
       <Grid container>
         <Grid item xs>
-          <Link href="#" variant="body2" onClick={() => getDescriptors()}>
+          <Link href="#" variant="body2">
             Se connecter via mot de passe?
           </Link>
         </Grid>
