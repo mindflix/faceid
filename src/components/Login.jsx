@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
 import { useFace } from "../hooks/useFace";
 
-import { loadModels, getFullFaceDescription } from "../api/face";
+import { loadModels, getFullFaceDescription, createMatcher } from "../api/face";
 
 import Copyright from "./Copyright";
 import Webcam from "react-webcam";
@@ -51,58 +51,38 @@ const useStyles = makeStyles((theme) => ({
 
 function FaceReco() {
   const webcam = useRef();
-
-  const [faceMatcher, setFaceMatcher] = useState([]);
-  const [user, setUser] = useState(null);
-
-  const { users, createMatcher } = useFace();
-
   let videoConstraints = {
     width: WIDTH,
     height: HEIGHT,
   };
 
-  const init = async () => {
-    await loadModels();
-    const matcher = await createMatcher(users);
-    await setFaceMatcher(matcher);
-  };
+  const { users } = useFace();
 
-  const capture = async () => {
-    if (webcam.current.stream.active !== "undefined") {
-      await getFullFaceDescription(
-        webcam.current.getScreenshot(),
-        inputSize
-      ).then(async (fullDesc) => {
-        console.log(faceMatcher);
-        let descriptors = fullDesc.map((fd) => fd.descriptor);
-        if (descriptors.length !== 0 && !!faceMatcher) {
-          let match = await descriptors.map((descriptor) =>
-            faceMatcher.findBestMatch(descriptor)
-          );
-          if (match) {
-            let label = match.map((m) => m._label);
-            if (!label.includes("unknown")) {
-              setUser(label.pop());
-            }
-          }
-        }
+  const [faceMatcher, setFaceMatcher] = useState([]);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (users.length !== 0 && faceMatcher.length === 0) {
+      loadModels().then(async () => {
+        setFaceMatcher(await createMatcher(users));
       });
     }
-  };
-
-  useEffect(() => {
-    init();
-  }, []);
-
-  useEffect(() => {
-    if (users.length !== 0 && faceMatcher.length !== 0) {
-      const interval = setInterval(() => {
-        capture();
-      }, 1000);
-      return () => clearInterval(interval);
+    if (faceMatcher.length !== 0) {
+      console.log(faceMatcher);
+      // const interval = setInterval(() => {
+      //   capture();
+      // }, 3000);
+      // return () => clearInterval(interval);
     }
-  }, [faceMatcher]);
+  }, [users, faceMatcher]);
+
+  const capture = () => {
+    if (!!webcam.current) {
+      getFullFaceDescription(webcam.current.getScreenshot(), inputSize).then(
+        (fullDesc) => {}
+      );
+    }
+  };
 
   return (
     <div>

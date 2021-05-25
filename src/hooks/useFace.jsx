@@ -7,36 +7,18 @@ const db = firebase.firestore();
 
 export function useFace() {
   const [users, setUsers] = useState([]);
-  const maxDescriptorDistance = 0.5;
 
   const getUsers = () => {
-    db.collection("users").onSnapshot((snapshot) => {
-      const res = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    db.collection("users")
+      .get()
+      .then((snapshot) => {
+        const res = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      setUsers(res);
-    });
-  };
-
-  const createMatcher = async (faceProfiles) => {
-    let members = Object.keys(faceProfiles);
-    let labeledDescriptors = members.map(
-      (member) =>
-        new faceapi.LabeledFaceDescriptors(
-          faceProfiles[member].email,
-          faceProfiles[member].descriptors.map(
-            (descriptor) => new Float32Array(descriptor)
-          )
-        )
-    );
-
-    let faceMatcher = new faceapi.FaceMatcher(
-      labeledDescriptors,
-      maxDescriptorDistance
-    );
-    return faceMatcher;
+        setUsers(res);
+      });
   };
 
   useEffect(() => {
@@ -46,7 +28,5 @@ export function useFace() {
   // Return face methods
   return {
     users,
-    getUsers,
-    createMatcher,
   };
 }

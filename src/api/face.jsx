@@ -29,7 +29,19 @@ export async function getFullFaceDescription(blob, inputSize = 512) {
   return fullDesc;
 }
 
-export async function createMatcher(faceProfiles) {
-  // Create labeled descriptors of member from profile
-  
-}
+const maxDescriptorDistance = 0.5;
+
+export const createMatcher = async (faceProfiles) => {
+  let members = Object.keys(faceProfiles);
+  let labeledDescriptors = members.map((member) => {
+    const descriptors = new Float32Array(faceProfiles[member].descriptors);
+    console.log(descriptors);
+  });
+
+  // let faceMatcher = new faceapi.FaceMatcher(
+  //   labeledDescriptors,
+  //   maxDescriptorDistance
+  // );
+  // return faceMatcher;
+  return labeledDescriptors;
+};
