@@ -68,18 +68,30 @@ function FaceReco() {
       });
     }
     if (faceMatcher.length !== 0) {
-      console.log(faceMatcher);
-      // const interval = setInterval(() => {
-      //   capture();
-      // }, 3000);
-      // return () => clearInterval(interval);
+      const interval = setInterval(() => {
+        capture();
+      }, 500);
+      return () => clearInterval(interval);
     }
   }, [users, faceMatcher]);
 
   const capture = () => {
     if (!!webcam.current) {
       getFullFaceDescription(webcam.current.getScreenshot(), inputSize).then(
-        (fullDesc) => {}
+        async (fullDesc) => {
+          let descriptors = fullDesc.map((fd) => fd.descriptor);
+          if (descriptors.length !== 0 && !!faceMatcher) {
+            let match = await descriptors.map((descriptor) =>
+              faceMatcher.findBestMatch(descriptor)
+            );
+            if (match) {
+              let label = match.map((m) => m._label);
+              if (!label.includes("unknown")) {
+                setUser(label.pop());
+              }
+            }
+          }
+        }
       );
     }
   };

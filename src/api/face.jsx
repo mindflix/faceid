@@ -34,14 +34,16 @@ const maxDescriptorDistance = 0.5;
 export const createMatcher = async (faceProfiles) => {
   let members = Object.keys(faceProfiles);
   let labeledDescriptors = members.map((member) => {
-    const descriptors = new Float32Array(faceProfiles[member].descriptors);
-    console.log(descriptors);
+    let label = faceProfiles[member].email;
+    let descriptors = [];
+    let descriptor = new Float32Array(faceProfiles[member].descriptors);
+    descriptors.push(descriptor);
+    return new faceapi.LabeledFaceDescriptors(label, descriptors);
   });
 
-  // let faceMatcher = new faceapi.FaceMatcher(
-  //   labeledDescriptors,
-  //   maxDescriptorDistance
-  // );
-  // return faceMatcher;
-  return labeledDescriptors;
+  let faceMatcher = new faceapi.FaceMatcher(
+    labeledDescriptors,
+    maxDescriptorDistance
+  );
+  return faceMatcher;
 };
